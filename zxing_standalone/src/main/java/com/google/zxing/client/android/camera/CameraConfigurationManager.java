@@ -34,6 +34,7 @@ import com.google.zxing.client.android.camera.open.OpenCamera;
  * A class which deals with reading, parsing, and setting the camera parameters which are used to
  * configure the camera hardware.
  */
+@SuppressWarnings("deprecation") // camera APIs
 final class CameraConfigurationManager {
 
   private static final String TAG = "CameraConfiguration";
@@ -160,7 +161,7 @@ final class CameraConfigurationManager {
     CameraConfigurationUtils.setFocus(
         parameters,
         prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true),
-        prefs.getBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, true),
+        prefs.getBoolean(PreferencesActivity.KEY_DISABLE_CONTINUOUS_FOCUS, false),
         safeMode);
 
     if (!safeMode) {
@@ -177,6 +178,10 @@ final class CameraConfigurationManager {
         CameraConfigurationUtils.setFocusArea(parameters);
         CameraConfigurationUtils.setMetering(parameters);
       }
+
+      //SetRecordingHint to true also a workaround for low framerate on Nexus 4
+      //https://stackoverflow.com/questions/14131900/extreme-camera-lag-on-nexus-4
+      parameters.setRecordingHint(true);
 
     }
 
@@ -220,10 +225,10 @@ final class CameraConfigurationManager {
     if (camera != null) {
       Camera.Parameters parameters = camera.getParameters();
       if (parameters != null) {
-        String flashMode = camera.getParameters().getFlashMode();
-        return flashMode != null &&
-            (Camera.Parameters.FLASH_MODE_ON.equals(flashMode) ||
-             Camera.Parameters.FLASH_MODE_TORCH.equals(flashMode));
+        String flashMode = parameters.getFlashMode();
+        return
+            Camera.Parameters.FLASH_MODE_ON.equals(flashMode) ||
+            Camera.Parameters.FLASH_MODE_TORCH.equals(flashMode);
       }
     }
     return false;
